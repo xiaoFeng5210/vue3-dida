@@ -39,7 +39,7 @@ const selected = 'bg-[#E7F5EE] dark:bg-[#233633]'
 
 const taskStore = useTaskStore()
 const projectSelectedStatusStore = useProjectSelectedStatusStore()
-const { showMoreIconIndex, showWitchPopover, openPopover, hideTaskItem, shouldShowTaskList } = useProjectMoreActions()
+const { showMoreIconIndex, showWitchPopover, openPopover, hideTaskItem, canShowTaskList } = useProjectMoreActions()
 
 const handleTaskItemClick = (projectName: string, key: number) => {
   taskStore.changeCurrentActiveProject(projectName)
@@ -51,7 +51,7 @@ const handleTaskItemClick = (projectName: string, key: number) => {
   <ul>
     <li
       v-for="item in taskList"
-      v-show="shouldShowTaskList.includes(item.title)"
+      v-show="canShowTaskList.includes(item.key)"
       :key="item.key"
       li_common
       pl-4
@@ -61,8 +61,8 @@ const handleTaskItemClick = (projectName: string, key: number) => {
         projectSelectedStatusStore.selectedKey[0] === item.key ? selected : ''
       "
       @click="handleTaskItemClick(item.title, item.key)"
-      @mouseenter="showMoreIconIndex = item.title"
-      @mouseleave="showMoreIconIndex = ''"
+      @mouseenter="showMoreIconIndex = item.key"
+      @mouseleave="showMoreIconIndex = -1"
     >
       <div flex>
         <Icon
@@ -74,23 +74,23 @@ const handleTaskItemClick = (projectName: string, key: number) => {
         <span class="ml-2">{{ item.title }}</span>
       </div>
       <NPopover
-        trigger="click" style="padding: 5px 0 5px 0" :show="showWitchPopover === item.title" :show-arrow="false"
-        placement="bottom-start" @clickoutside="showWitchPopover = ''"
+        trigger="click" style="padding: 5px 0 5px 0" :show="showWitchPopover === item.key" :show-arrow="false"
+        placement="bottom-start" @clickoutside="showWitchPopover = -1"
       >
         <template #trigger>
           <Icon
-            v-show="projectSelectedStatusStore.selectedKey[0] === item.key || showMoreIconIndex === item.title"
+            v-show="projectSelectedStatusStore.selectedKey[0] === item.key || showMoreIconIndex === item.key"
             icon="material-symbols:more-horiz"
             width="20"
             class="color-[#9D9FA3]"
             dark="color-white"
-            @click="($event) => { $event.stopPropagation(); openPopover(item.title) }"
+            @click="($event) => { $event.stopPropagation(); openPopover(item.key) }"
           />
         </template>
         <ul w-180px cursor-pointer>
           <li
             hover="bg-[#F3F3F5] dark:bg-[#2D2D30]" pl-4 text-14px h-20px lh-20px
-            @click="hideTaskItem(item.title)"
+            @click="hideTaskItem(item.key)"
           >
             隐藏
           </li>
