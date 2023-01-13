@@ -1,37 +1,43 @@
-import { onBeforeMount, ref } from 'vue'
-import { SmartProjectNames } from '@/services/task/smartProject'
+import { useStorage } from '@vueuse/core'
+import { ref } from 'vue'
 
-type ShowMoreIconIndex = `${SmartProjectNames}` | ''
-type ShowWitchPopover = ShowMoreIconIndex
-// 这里只是做了隐藏功能，后续可拓展智能清单其他的actions
 export function useProjectMoreActions() {
-  const showMoreIconIndex = ref<ShowMoreIconIndex>('')
-  const showWitchPopover = ref<ShowWitchPopover>('')
-  // 通过修改此数组来展示或隐藏taskList里的某一项,以后在设置页面通过修改此数组来控制，现在先默认展示全部
-  const shouldShowTaskList = ref<Array<`${SmartProjectNames}`>>(Object.values(SmartProjectNames))
+  const showMoreIconIndex = ref<number>(-1)
+  const showWitchPopover = ref<number>(-1)
+  // 通过修改此数组来展示或隐藏taskList里的某一项,以后在设置页面通过修改此数组来控制
+  const canShowTaskList = useStorage('canShowTaskList', [1, 2, 3, 4])
 
-  const openPopover = (key: `${SmartProjectNames}`) => {
+  const openPopover = (key: number) => {
     showWitchPopover.value = key
   }
 
-  const hideTaskItem = (name: `${SmartProjectNames}`) => {
-    if (shouldShowTaskList.value.includes(name)) {
-      shouldShowTaskList.value = shouldShowTaskList.value.filter(
-        item => item !== name,
+  const hideTaskItem = (key: number) => {
+    if (canShowTaskList.value.includes(key)) {
+      canShowTaskList.value = canShowTaskList.value.filter(
+        item => item !== key,
       )
     }
-    showWitchPopover.value = ''
+    showWitchPopover.value = -1
   }
-  // TODO: 这里以后通过设置页面拿到应该要展示的智能清单数据，然后处理shouldShowTaskList
-  onBeforeMount(() => {
 
-  })
+  const showTaskItem = (key: number) => {
+    if (canShowTaskList.value.includes(key))
+      return
+
+    canShowTaskList.value.push(key)
+  }
+
+  const whetherCanShow = (key: number) => {
+    return canShowTaskList.value.includes(key)
+  }
 
   return {
+    whetherCanShow,
     showMoreIconIndex,
     showWitchPopover,
-    shouldShowTaskList,
+    canShowTaskList,
     openPopover,
     hideTaskItem,
+    showTaskItem,
   }
 }
