@@ -1,94 +1,85 @@
-import { describe, expect, it } from 'vitest'
-import { createListProject } from '../listProject'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Task } from '../task'
 import {
   TaskState,
   addTask,
+  changeTaskContent,
+  changeTaskTitle,
   completeTask,
   createTask,
+  initTask,
   removeTask,
   restoreTask,
 } from '../task'
-import {
-  completedSmartProject,
-  initCompletedSmartProject,
-  initTrashSmartProject,
-  trashSmartProject,
-} from '../smartProject'
 
 describe('task', () => {
-  it('should edit title of task', () => {
-    const task = createTask('coding')
-
-    task.title = 'eat'
-
-    expect(task.title).toBe('eat')
-  })
-  it('should edit content of task', () => {
-    const task = createTask('coding')
-    task.content = 'hi'
-
-    expect(task.content).toBe('hi')
-  })
-  it('add task to listProject ', () => {
-    const listProject = createListProject('one')
-    const firstTask = createTask('coding')
-    addTask(firstTask, listProject)
-    expect(listProject.tasks[0].title).toEqual('coding')
-
-    const secondTask = createTask('play game')
-    addTask(secondTask, listProject)
-    expect(listProject.tasks[0].title).toEqual('play game')
+  let tasks: Task[]
+  let repository: any
+  beforeEach(() => {
+    repository = {}
+    tasks = []
+    initTask(tasks, repository)
   })
 
-  it('remove task', () => {
-    const listProject = createListProject('one')
-    const task = createTask('coding')
-    initTrashSmartProject()
-    addTask(task, listProject)
+  it('should change title of task', () => {
+    repository.updateTask = vi.fn()
+    const task = createTask('吃饭')
+
+    changeTaskTitle(task, '睡觉')
+
+    expect(task.title).toBe('睡觉')
+  })
+
+  it('should change content of task', () => {
+    repository.updateTask = vi.fn()
+    const task = createTask('吃饭')
+
+    changeTaskContent(task, '干饭干饭')
+
+    expect(task.content).toBe('干饭干饭')
+  })
+  it('should add task ', () => {
+    repository.addTask = vi.fn()
+
+    addTask(createTask('吃饭'))
+    addTask(createTask('睡觉'))
+
+    expect(tasks.length).toBe(2)
+    expect(tasks[0].title).toBe('睡觉')
+    expect(tasks[1].title).toBe('吃饭')
+  })
+
+  it('should remove task', () => {
+    repository.updateTask = vi.fn()
+    const task = createTask('吃饭')
+    tasks.push(task)
 
     removeTask(task)
 
-    expect(listProject.tasks.length).toBe(0)
-    expect(trashSmartProject!.tasks[0].title).toBe('coding')
+    expect(task.state).toBe(TaskState.REMOVED)
+    expect(tasks.length).toBe(0)
   })
 
-  it('complete task', () => {
-    const listProject = createListProject('one')
-    const task = createTask('coding')
-    initCompletedSmartProject()
-    addTask(task, listProject)
+  it('should complete task', () => {
+    repository.updateTask = vi.fn()
+    const task = createTask('吃饭')
+    tasks.push(task)
 
     completeTask(task)
 
-    expect(listProject.tasks.length).toBe(0)
-    expect(completedSmartProject!.tasks[0].title).toBe('coding')
+    expect(task.state).toBe(TaskState.COMPLETED)
+    expect(tasks.length).toBe(0)
   })
 
-  it('restore task', () => {
-    const listProject = createListProject('one')
-    const task = createTask('coding')
-    initCompletedSmartProject()
-    addTask(task, listProject)
-    completeTask(task)
+  it('should restore task', () => {
+    repository.updateTask = vi.fn()
+    const task = createTask('吃饭')
+    task.state = TaskState.COMPLETED
+    tasks.push(task)
 
     restoreTask(task)
 
-    expect(completedSmartProject.tasks.length).toBe(0)
-    expect(listProject!.tasks[0].title).toBe('coding')
-  })
-
-  it('task state', () => {
-    const task = createTask('coding')
-    expect(task.state).toEqual(TaskState.ACTIVE)
-
-    const listProject = createListProject('one')
-    addTask(task, listProject)
-    expect(task.state).toEqual(TaskState.ACTIVE)
-
-    completeTask(task)
-    expect(task.state).toEqual(TaskState.COMPLETED)
-
-    removeTask(task)
-    expect(task.state).toEqual(TaskState.REMOVED)
+    expect(task.state).toBe(TaskState.ACTIVE)
+    expect(tasks.length).toBe(0)
   })
 })
